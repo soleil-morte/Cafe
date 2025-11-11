@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Заказы - Кафе Уютное{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>📋 Заказы</h1>
+        <a href="/orders/create/" class="btn primary">📝 Создать заказ</a>
+    </div>
+    
+    <div class="orders-list">
+        {% for order in orders %}
+        <div class="order-card">
+            <h3>Заказ #{{ order.id }}</h3>
+            <p>Стол: {{ order.table.number }}</p>
+            <p>Статус: {% if order.is_completed %}✅ Выполнен{% else %}🟡 В работе{% endif %}</p>
+            <p>Сумма: {{ order.total_price }} руб.</p>
+        </div>
+        {% empty %}
+        <p>Пока нет заказов</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

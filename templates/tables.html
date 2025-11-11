@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Столы - Кафе Уютное{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>🪑 Столы</h1>
+    
+    <div class="tables-grid">
+        {% for table in tables %}
+        <div class="table-card {% if table.is_occupied %}occupied{% else %}free{% endif %}">
+            <h3>Стол {{ table.number }}</h3>
+            <p>Мест: {{ table.seats }}</p>
+            <p class="status">
+                {% if table.is_occupied %}
+                🔴 Занят
+                {% else %}
+                🟢 Свободен
+                {% endif %}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
