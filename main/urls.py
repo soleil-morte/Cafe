@@ -2,11 +2,29 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('', index, name='index'),
-    path('menu/', menu_list, name='menu'),
-    path('tables/', tables_list, name='tables'),
-    path('stock/', stock_list, name='stock'),
-    path('orders/', orders_list, name='orders'),
+   path('', Index, name='index'),
     
-
+     # Продукты
+    path('stock/', product_list, name='stock'),
+    path('stock/add/', product_add, name='product_add'),
+    path('stock/<int:product_id>/edit/', product_edit, name='product_edit'),
+    path('stock/<int:product_id>/delete/', product_delete, name='product_delete'),
+    
+    # Блюда
+    path('menu/', dish_list, name='menu'),
+    path('menu/add/', dish_add, name='dish_add'),
+    path('menu/<int:dish_id>/', dish_detail, name='dish_detail'),
+    path('menu/<int:dish_id>/edit/', dish_edit, name='dish_edit'),
+    path('menu/<int:dish_id>/delete/', dish_delete, name='dish_delete'),
+    
+    # Столы
+    path('tables/', tables_list, name='tables'),
+    path('tables/add/', table_add, name='table_add'),
+    path('tables/<int:table_id>/edit/', table_edit, name='table_edit'),
+    path('tables/<int:table_id>/delete/', table_delete, name='table_delete'),
+    path('tables/<int:table_id>/toggle/', table_toggle, name='table_toggle'),
+    
+    # Заказы
+    path('orders/', orders_list, name='orders'),
+    path('orders/create/', order_create, name='order_create'),
 ]

@@ -37,3 +37,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Простое подтверждение удаления
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчик для всех ссылок удаления
+    const deleteLinks = document.querySelectorAll('a[href*="/delete/"]');
+    
+    deleteLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const objectName = this.closest('.product-card, .dish-card, .table-card')
+                                .querySelector('h3').textContent;
+            
+            if (!confirm(`Вы уверены, что хотите удалить "${objectName}"?`)) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // Простое подтверждение для занятия/освобождения столов
+    const toggleLinks = document.querySelectorAll('a[href*="/toggle/"]');
+    toggleLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const tableCard = this.closest('.table-card');
+            const tableNumber = tableCard.querySelector('h3').textContent;
+            const action = this.textContent.includes('Занять') ? 'занять' : 'освободить';
+            
+            if (!confirm(`Вы уверены, что хотите ${action} ${tableNumber}?`)) {
+                e.preventDefault();
+            }
+        });
+    });
+});

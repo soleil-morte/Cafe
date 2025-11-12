@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>{{ dish.name }}</h1>
+        <a href="/menu/" class="btn">← Назад к меню</a>
+    </div>
+
+    <div class="dish-detail">
+        <div class="dish-info">
+            <h3>📝 Информация</h3>
+            <p><strong>Цена:</strong> {{ dish.price }} сум.</p>
+            <p><strong>Описание:</strong> {{ dish.description|default:"Нет описания" }}</p>
+        </div>
+
+        <div class="dish-cost">
+            <h3>💰 Расчет стоимости</h3>
+            <p><strong>Себестоимость:</strong> {{ cost|floatformat:2 }} сум.</p>
+            <p><strong>Прибыль с порции:</strong> {{ profit|floatformat:2 }} сум.</p>
+            <p><strong>Наценка:</strong> {{ dish.price|floatformat:2 }} сум.</p>
+        </div>
+
+        <div class="ingredients-list">
+            <h3>🥘 Ингредиенты</h3>
+            {% for item in ingredients_with_cost %}
+            <div class="ingredient-item">
+                <span class="ingredient-name">{{ item.ingredient.product.name }}</span>
+                <span class="ingredient-quantity">
+                    {{ item.ingredient.quantity|floatformat:3 }} {{ item.ingredient.product.get_unit_display }}
+                </span>
+                <span class="ingredient-cost">
+                    {{ item.ingredient.quantity|floatformat:3 }} × {{ item.ingredient.product.purchase_price }} =
+                    {{ item.cost|floatformat:2 }} сум.
+                </span>
+            </div>
+            {% empty %}
+            <p>Ингредиенты не добавлены</p>
+            {% endfor %}
+        </div>
+        {% endblock %}

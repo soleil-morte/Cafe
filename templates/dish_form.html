@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="form-header">
+        <h1>{{ title }}</h1>
+        <a href="/menu/" class="btn">← Назад к меню</a>
+    </div>
+    
+    <div class="form-container">
+        <form method="post" class="dish-form">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h3>📝 Основная информация</h3>
+                
+                <div class="form-group">
+                    <label for="{{ dish_form.name.id_for_label }}">Название блюда:</label>
+                    {{ dish_form.name }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ dish_form.description.id_for_label }}">Описание:</label>
+                    {{ dish_form.description }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ dish_form.price.id_for_label }}">Цена продажи (сум):</label>
+                    {{ dish_form.price }}
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>🥘 Ингредиенты</h3>
+                <p class="form-help">Укажите продукты и их количество для одной порции</p>
+                
+                {{ formset.management_form }}
+                <div class="ingredients-formset">
+                    {% for form in formset %}
+                    <div class="ingredient-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Продукт:</label>
+                                {{ form.product }}
+                            </div>
+                            <div class="form-group">
+                                <label>Количество:</label>
+                                {{ form.quantity }}
+                            </div>
+                            <div class="form-group">
+                                <label>Удалить:</label>
+                                {{ form.DELETE }}
+                            </div>
+                        </div>
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <button type="submit" class="btn primary">💾 Сохранить блюдо</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

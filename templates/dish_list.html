@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>🍽️ Наше меню</h1>
+        <a href="/menu/add/" class="btn primary">➕ Добавить блюдо</a>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="dishes-grid">
+        {% for dish in dishes %}
+        <div class="dish-card">
+            <h3>{{ dish.name }}</h3>
+            <p class="price">{{ dish.price }} сум.</p>
+            <p class="description">{{ dish.description|default:"Описание скоро появится..." }}</p>
+            <div class="card-actions">
+                <a href="/menu/{{ dish.id }}/" class="btn btn-sm">👁️ Подробнее</a>
+                <a href="/menu/{{ dish.id }}/edit/" class="btn btn-sm">✏️ Изменить</a>
+                <a href="/menu/{{ dish.id }}/delete/" class="btn btn-sm danger"
+                    onclick="return confirm('Удалить блюдо {{ dish.name }}?')">🗑️ Удалить</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <p>🍽️ Пока нет блюд в меню</p>
+            <a href="/menu/add/" class="btn primary">Добавить первое блюдо</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

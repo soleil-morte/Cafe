@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container">
     <h1>🪑 Столы</h1>
-    
+
     <div class="tables-grid">
         {% for table in tables %}
         <div class="table-card {% if table.is_occupied %}occupied{% else %}free{% endif %}">
@@ -18,6 +18,14 @@
                 🟢 Свободен
                 {% endif %}
             </p>
+            <div class="card-actions">
+                <a href="/tables/{{ table.id }}/toggle/" class="btn btn-sm">
+                    {% if table.is_occupied %}🟢 Освободить{% else %}🔴 Занять{% endif %}
+                </a>
+                <a href="/tables/{{ table.id }}/edit/" class="btn btn-sm">✏️ Изменить</a>
+                <a href="/tables/{{ table.id }}/delete/" class="btn btn-sm danger"
+                    onclick="return confirm('Удалить стол {{ table.number }}?')">🗑️ Удалить</a>
+            </div>
         </div>
         {% endfor %}
     </div>
