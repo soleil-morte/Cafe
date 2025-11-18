@@ -58,19 +58,24 @@
                             <div class="form-group">
                                 <label>Продукт:</label>
                                 {{ form.product }}
+                                <small class="form-text" style="color: #666;">
+                                    На складе: {{ form.instance.product.quantity|default:0 }} {{
+                                    form.instance.product.get_unit_display|default:"" }}
+                                </small>
                             </div>
                             <div class="form-group">
                                 <label>Количество:</label>
                                 {{ form.quantity }}
+                            </div>
+                            <div class="form-group">
+                                <label>Единица:</label>
+                                {{ form.unit }}
                             </div>
                             <div class="form-group delete-group">
                                 <label>Удалить:</label>
                                 {{ form.DELETE }}
                             </div>
                         </div>
-                        {% for hidden in form.hidden_fields %}
-                        {{ hidden }}
-                        {% endfor %}
                     </div>
                     {% endfor %}
                 </div>

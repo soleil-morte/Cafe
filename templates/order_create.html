@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Создать заказ - Кафе Уютное{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-header">
+        <h1>📝 Создать заказ</h1>
+        <a href="/orders/" class="btn">← Назад к заказам</a>
+    </div>
+    
+    <div class="form-container glass">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>Тип заказа:</label>
+                <select name="order_type" class="form-control">
+                    <option value="takeaway">Навынос</option>
+                    <option value="delivery">Доставка</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Имя клиента:</label>
+                <input type="text" name="customer_name" class="form-control" placeholder="Введите имя клиента">
+            </div>
+            
+            <div class="form-group">
+                <label>Телефон:</label>
+                <input type="text" name="phone_number" class="form-control" placeholder="Введите номер телефона">
+            </div>
+            
+            <div class="form-group">
+                <label>Адрес доставки (только для доставки):</label>
+                <textarea name="address" class="form-control" rows="3" placeholder="Введите адрес доставки"></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">📋 Создать заказ</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

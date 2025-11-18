@@ -103,34 +103,47 @@ function addToOrder(dishId, name, price) {
     form.submit();
 }
 
-function updateQuantity(orderItemId, change) {
+function updateQuantity(orderItemId, change, buttonElement) {
+    console.log('updateQuantity called:', orderItemId, change);
+    
+    // Находим элемент с количеством
+    const controls = buttonElement.closest('.quantity-controls');
+    const quantityElement = controls.querySelector('.quantity');
+    let currentQuantity = parseInt(quantityElement.textContent);
+    
+    console.log('Current quantity:', currentQuantity);
+    
+    // Вычисляем новое количество
+    let newQuantity = currentQuantity + change;
+    
+    // Не позволяем количеству быть меньше 1
+    if (newQuantity < 1) {
+        newQuantity = 1;
+        return;
+    }
+    
+    console.log('New quantity:', newQuantity);
+    
+    // Временно обновляем отображение для лучшего UX
+    quantityElement.textContent = newQuantity;
+    
+    // Отправляем запрос на сервер
+    sendQuantityUpdate(orderItemId, newQuantity);
+}
+
+function sendQuantityUpdate(orderItemId, quantity) {
     const form = document.createElement('form');
-    form.method = 'post';
+    form.method = 'POST';
     form.style.display = 'none';
-    form.action = '';
     
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    const csrfInput = document.createElement('input');
-    csrfInput.name = 'csrfmiddlewaretoken';
-    csrfInput.value = csrfToken;
     
-    const actionInput = document.createElement('input');
-    actionInput.name = 'action';
-    actionInput.value = 'update_quantity';
-    
-    const itemInput = document.createElement('input');
-    itemInput.name = 'order_item_id';
-    itemInput.value = orderItemId;
-    
-    const newQuantity = Math.max(0, change); // Простая логика для начала
-    const quantityInput = document.createElement('input');
-    quantityInput.name = 'quantity';
-    quantityInput.value = newQuantity;
-    
-    form.appendChild(csrfInput);
-    form.appendChild(actionInput);
-    form.appendChild(itemInput);
-    form.appendChild(quantityInput);
+    form.innerHTML = `
+        <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+        <input type="hidden" name="action" value="update_quantity">
+        <input type="hidden" name="order_item_id" value="${orderItemId}">
+        <input type="hidden" name="quantity" value="${quantity}">
+    `;
     
     document.body.appendChild(form);
     form.submit();
@@ -139,26 +152,16 @@ function updateQuantity(orderItemId, change) {
 function removeItem(orderItemId) {
     if (confirm('Bu taomni o\'chirmoqchimisiz?')) {
         const form = document.createElement('form');
-        form.method = 'post';
+        form.method = 'POST';
         form.style.display = 'none';
-        form.action = '';
         
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const csrfInput = document.createElement('input');
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = csrfToken;
         
-        const actionInput = document.createElement('input');
-        actionInput.name = 'action';
-        actionInput.value = 'remove_item';
-        
-        const itemInput = document.createElement('input');
-        itemInput.name = 'order_item_id';
-        itemInput.value = orderItemId;
-        
-        form.appendChild(csrfInput);
-        form.appendChild(actionInput);
-        form.appendChild(itemInput);
+        form.innerHTML = `
+            <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+            <input type="hidden" name="action" value="remove_item">
+            <input type="hidden" name="order_item_id" value="${orderItemId}">
+        `;
         
         document.body.appendChild(form);
         form.submit();
@@ -247,3 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
 });
+
+
+
+

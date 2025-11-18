@@ -25,10 +25,11 @@ class DishForm(forms.ModelForm):
 class DishIngredientForm(forms.ModelForm):
     class Meta:
         model = DishIngredient
-        fields = ['product', 'quantity']
+        fields = ['product', 'quantity', 'unit']
         widgets = {
             'product': forms.Select(attrs={'class': 'form-control'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'unit': forms.Select(attrs={'class': 'form-control'}),
         }
 
 DishIngredientFormSet = forms.inlineformset_factory(
@@ -53,3 +54,16 @@ class TableForm(forms.ModelForm):
         if Table.objects.filter(number=number).exists():
             raise forms.ValidationError("Стол с таким номером уже существует")
         return number
+    
+    
+class OrderForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['order_type', 'table', 'customer_name', 'phone_number', 'address']
+        widgets = {
+            'order_type': forms.Select(attrs={'class': 'form-control'}),
+            'table': forms.Select(attrs={'class': 'form-control'}),
+            'customer_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Имя клиента'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Номер телефона'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Адрес доставки'}),
+        }

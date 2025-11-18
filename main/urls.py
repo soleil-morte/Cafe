@@ -22,11 +22,27 @@ urlpatterns = [
     path('tables/add/', table_add, name='table_add'),
     path('tables/<int:table_id>/edit/', table_edit, name='table_edit'),
     path('tables/<int:table_id>/delete/', table_delete, name='table_delete'),
-    path('tables/<int:table_id>/toggle/', table_toggle, name='table_toggle'),
-    path('tables/<int:table_id>/order/', table_order, name='table_order'),  # НОВЫЙ URL
+    path('tables/<int:table_id>/toggle/', table_toggle, name='table_toggle'), 
+    path('tables/<int:table_id>/order/', table_order, name='table_order'), 
     
     # Заказы
     path('orders/', orders_list, name='orders'),
     path('orders/create/', order_create, name='order_create'),
+    path('orders/<int:order_id>/', table_order, name='table_order_by_id'), 
     path('orders/<int:order_id>/delete/', order_delete, name='order_delete'),
 ]
+
+
+# Функция для обратной совместимости
+def table_order_legacy(request, table_id):
+    table = get_object_or_404(Table, id=table_id)
+    # Создаем заказ для стола
+    order = Order.objects.create(
+        order_type='dine_in',
+        table=table
+    )
+    # Занимаем стол
+    table.is_occupied = True
+    table.save()
+    
+    return redirect('table_order', order_id=order.id)
