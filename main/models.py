@@ -18,12 +18,13 @@ class Product(models.Model):
         return f"{self.name} ({self.quantity} {self.unit})"
 
 class Dish(models.Model):
+    image = models.ImageField( upload_to='dishes/', blank=True, null=True,)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     
     def __str__(self):
-        return f"{self.name} - {self.price} руб."
+        return f"{self.name} - {self.price} сум."
 
 class DishIngredient(models.Model):
     dish = models.ForeignKey(Dish, on_delete=models.CASCADE, related_name='ingredients')
@@ -50,7 +51,10 @@ class Order(models.Model):
     is_completed = models.BooleanField(default=False)
     
     def total_price(self):
-        return sum(item.total for item in self.order_items.all())
+        total = Decimal('0')
+        for item in self.order_items.all():
+            total += item.dish.price * item.quantity
+        return total
     
     def __str__(self):
         return f"Заказ #{self.id} - Стол {self.table.number}"

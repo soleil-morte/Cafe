@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+
+{% block title %}{{ dish.name }} - Кафе Уютное{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="page-header">
@@ -7,17 +10,24 @@
     </div>
 
     <div class="dish-detail">
-        <div class="dish-info">
-            <h3>📝 Информация</h3>
-            <p><strong>Цена:</strong> {{ dish.price }} сум.</p>
-            <p><strong>Описание:</strong> {{ dish.description|default:"Нет описания" }}</p>
+        <div class="dish-header">
+            {% if dish.image %}
+            <div class="dish-image-large">
+                <img src="{{ dish.image.url }}" alt="{{ dish.name }}">
+            </div>
+            {% endif %}
+
+            <div class="dish-info">
+                <h3>📝 Информация</h3>
+                <p><strong>Цена:</strong> {{ dish.price }} сум</p>
+                <p><strong>Описание:</strong> {{ dish.description|default:"Нет описания" }}</p>
+            </div>
         </div>
 
         <div class="dish-cost">
             <h3>💰 Расчет стоимости</h3>
-            <p><strong>Себестоимость:</strong> {{ cost|floatformat:2 }} сум.</p>
-            <p><strong>Прибыль с порции:</strong> {{ profit|floatformat:2 }} сум.</p>
-            <p><strong>Наценка:</strong> {{ dish.price|floatformat:2 }} сум.</p>
+            <p><strong>Себестоимость:</strong> {{ cost|floatformat:2 }} сум</p>
+            <p><strong>Прибыль с порции:</strong> {{ profit|floatformat:2 }} сум</p>
         </div>
 
         <div class="ingredients-list">
@@ -26,10 +36,10 @@
             <div class="ingredient-item">
                 <span class="ingredient-name">{{ item.ingredient.product.name }}</span>
                 <span class="ingredient-quantity">
-                    {{ item.ingredient.quantity|floatformat:3 }} {{ item.ingredient.product.get_unit_display }}
+                    {{ item.ingredient.quantity }} {{ item.ingredient.product.get_unit_display }}
                 </span>
                 <span class="ingredient-cost">
-                    {{ item.ingredient.quantity|floatformat:3 }} × {{ item.ingredient.product.purchase_price }} =
+                    {{ item.ingredient.quantity }} × {{ item.ingredient.product.purchase_price }} =
                     {{ item.cost|floatformat:2 }} сум.
                 </span>
             </div>
@@ -37,4 +47,6 @@
             <p>Ингредиенты не добавлены</p>
             {% endfor %}
         </div>
-        {% endblock %}
+    </div>
+</div>
+{% endblock %}

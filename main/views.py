@@ -57,8 +57,9 @@ def dish_list(request):
 
 def dish_add(request):
     if request.method == 'POST':
-        dish_form = DishForm(request.POST)
+        dish_form = DishForm(request.POST, request.FILES)  # Добавляем request.FILES!
         formset = DishIngredientFormSet(request.POST)
+        
         if dish_form.is_valid() and formset.is_valid():
             dish = dish_form.save()
             formset.instance = dish
@@ -68,6 +69,7 @@ def dish_add(request):
     else:
         dish_form = DishForm()
         formset = DishIngredientFormSet()
+    
     return render(request, 'dish_form.html', {
         'dish_form': dish_form,
         'formset': formset,
@@ -77,7 +79,7 @@ def dish_add(request):
 def dish_edit(request, dish_id):
     dish = get_object_or_404(Dish, id=dish_id)
     if request.method == 'POST':
-        dish_form = DishForm(request.POST, instance=dish)
+        dish_form = DishForm(request.POST, request.FILES, instance=dish)  # Добавляем request.FILES!
         formset = DishIngredientFormSet(request.POST, instance=dish)
         if dish_form.is_valid() and formset.is_valid():
             dish_form.save()
@@ -177,3 +179,148 @@ def orders_list(request):
 def order_create(request):
     messages.info(request, 'Функция создания заказа в разработке')
     return redirect('orders')
+
+
+def order_delete(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order_number = order.id
+    order.delete()
+    messages.success(request, f'Заказ #{order_number} удален!')
+    return redirect('orders')
+
+
+
+def table_order(request, table_id):
+    table = get_object_or_404(Table, id=table_id)
+    dishes = Dish.objects.all()
+    
+    # Получаем активный заказ для этого стола или создаем новый
+    order, created = Order.objects.get_or_create(
+        table=table,
+        is_completed=False
+    )
+    
+    # Если заказ создан впервые, занимаем стол
+    if created and not table.is_occupied:
+        table.is_occupied = True
+        table.save()
+        messages.success(request, f'Стол {table.number} теперь занят!')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'add_item':
+            dish_id = request.POST.get('dish_id')
+            quantity = int(request.POST.get('quantity', 1))
+            
+            dish = get_object_or_404(Dish, id=dish_id)
+            
+            # Добавляем блюдо в заказ
+            order_item, created = OrderItem.objects.get_or_create(
+                order=order,
+                dish=dish,
+                defaults={'quantity': quantity}
+            )
+            
+            if not created:
+                order_item.quantity += quantity
+                order_item.save()
+                
+            messages.success(request, f'{dish.name} заказ добавлен!')
+            
+        elif action == 'update_quantity':
+            order_item_id = request.POST.get('order_item_id')
+            quantity = int(request.POST.get('quantity', 0))
+            
+            if quantity > 0:
+                order_item = get_object_or_404(OrderItem, id=order_item_id, order=order)
+                order_item.quantity = quantity
+                order_item.save()
+            else:
+                OrderItem.objects.filter(id=order_item_id, order=order).delete()
+                
+        elif action == 'remove_item':
+            order_item_id = request.POST.get('order_item_id')
+            OrderItem.objects.filter(id=order_item_id, order=order).delete()
+            messages.success(request, 'Блюдо удалено из заказа!')
+            
+        elif action == 'complete_order':
+            # Списание продуктов со склада
+            success = deduct_products_from_stock(order)
+            
+            if success:
+                # Завершаем заказ и освобождаем стол
+                order.is_completed = True
+                order.save()
+                table.is_occupied = False
+                table.save()
+                messages.success(request, f'Заказ для стола {table.number} завершен! Продукты списаны со склада.')
+            else:
+                messages.error(request, 'Недостаточно продуктов на складе для завершения заказа!')
+            
+            return redirect('tables')
+            
+        return redirect('table_order', table_id=table_id)
+    
+    order_items = order.order_items.all()
+    
+    # Расчет суммы заказа с чаевыми
+    subtotal = order.total_price()
+    service_fee = subtotal * Decimal('0.10')  # 10% чаевые
+    total_with_service = subtotal + service_fee
+    
+    context = {
+        'table': table,
+        'dishes': dishes,
+        'order': order,
+        'order_items': order_items,
+        'subtotal': subtotal,
+        'service_fee': service_fee,
+        'total_with_service': total_with_service,
+    }
+    
+    return render(request, 'table_order.html', context)
+
+
+def deduct_products_from_stock(order):
+    """
+    Списание продуктов со склада на основе заказа
+    Возвращает True если списание успешно, False если недостаточно продуктов
+    """
+    try:
+        # Собираем все продукты которые нужно списать
+        products_to_deduct = {}
+        
+        # Проходим по всем позициям заказа
+        for order_item in order.order_items.all():
+            dish = order_item.dish
+            quantity_ordered = order_item.quantity
+            
+            # Проходим по всем ингредиентам блюда
+            for ingredient in dish.ingredients.all():
+                product = ingredient.product
+                quantity_needed = ingredient.quantity * quantity_ordered
+                
+                # Добавляем к общему количеству для списания
+                if product.id in products_to_deduct:
+                    products_to_deduct[product.id] += quantity_needed
+                else:
+                    products_to_deduct[product.id] = quantity_needed
+        
+        # Проверяем достаточно ли продуктов на складе
+        for product_id, quantity_needed in products_to_deduct.items():
+            product = Product.objects.get(id=product_id)
+            if product.quantity < quantity_needed:
+                return False  # Недостаточно продуктов
+        
+        # Списание продуктов
+        for product_id, quantity_needed in products_to_deduct.items():
+            product = Product.objects.get(id=product_id)
+            product.quantity = max(0, product.quantity - quantity_needed)  # Защита от отрицательных значений
+            product.save()
+        
+        return True
+        
+    except Exception as e:
+        print(f"Ошибка при списании продуктов: {e}")
+        return False

@@ -4,8 +4,19 @@
 
 {% block content %}
 <div class="container">
-    <h1>🪑 Столы</h1>
-
+    <div class="page-header">
+        <h1>🪑 Столы</h1>
+        <a href="/tables/add/" class="btn primary">➕ Добавить стол</a>
+    </div>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
     <div class="tables-grid">
         {% for table in tables %}
         <div class="table-card {% if table.is_occupied %}occupied{% else %}free{% endif %}">
@@ -19,13 +30,21 @@
                 {% endif %}
             </p>
             <div class="card-actions">
+                <a href="/tables/{{ table.id }}/order/" class="btn btn-sm primary">
+                    📝 Принять заказ
+                </a>
                 <a href="/tables/{{ table.id }}/toggle/" class="btn btn-sm">
                     {% if table.is_occupied %}🟢 Освободить{% else %}🔴 Занять{% endif %}
                 </a>
                 <a href="/tables/{{ table.id }}/edit/" class="btn btn-sm">✏️ Изменить</a>
                 <a href="/tables/{{ table.id }}/delete/" class="btn btn-sm danger"
-                    onclick="return confirm('Удалить стол {{ table.number }}?')">🗑️ Удалить</a>
+                   onclick="return confirm('Удалить стол {{ table.number }}?')">🗑️ Удалить</a>
             </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <p>🪑 Пока нет столов</p>
+            <a href="/tables/add/" class="btn primary">Добавить первый стол</a>
         </div>
         {% endfor %}
     </div>

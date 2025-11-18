@@ -68,3 +68,182 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// ===== TABLE ORDER FUNCTIONS =====
+function addToOrder(dishId, name, price) {
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.style.display = 'none';
+    form.action = '';
+    
+    // Получаем CSRF токен
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    
+    const actionInput = document.createElement('input');
+    actionInput.name = 'action';
+    actionInput.value = 'add_item';
+    
+    const dishInput = document.createElement('input');
+    dishInput.name = 'dish_id';
+    dishInput.value = dishId;
+    
+    const quantityInput = document.createElement('input');
+    quantityInput.name = 'quantity';
+    quantityInput.value = 1;
+    
+    form.appendChild(csrfInput);
+    form.appendChild(actionInput);
+    form.appendChild(dishInput);
+    form.appendChild(quantityInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function updateQuantity(orderItemId, change) {
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.style.display = 'none';
+    form.action = '';
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    
+    const actionInput = document.createElement('input');
+    actionInput.name = 'action';
+    actionInput.value = 'update_quantity';
+    
+    const itemInput = document.createElement('input');
+    itemInput.name = 'order_item_id';
+    itemInput.value = orderItemId;
+    
+    const newQuantity = Math.max(0, change); // Простая логика для начала
+    const quantityInput = document.createElement('input');
+    quantityInput.name = 'quantity';
+    quantityInput.value = newQuantity;
+    
+    form.appendChild(csrfInput);
+    form.appendChild(actionInput);
+    form.appendChild(itemInput);
+    form.appendChild(quantityInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function removeItem(orderItemId) {
+    if (confirm('Bu taomni o\'chirmoqchimisiz?')) {
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.style.display = 'none';
+        form.action = '';
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        
+        const actionInput = document.createElement('input');
+        actionInput.name = 'action';
+        actionInput.value = 'remove_item';
+        
+        const itemInput = document.createElement('input');
+        itemInput.name = 'order_item_id';
+        itemInput.value = orderItemId;
+        
+        form.appendChild(csrfInput);
+        form.appendChild(actionInput);
+        form.appendChild(itemInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function printCheck() {
+    alert('Chek chop etildi!');
+}
+
+function completeOrder() {
+    if (confirm('To\'lovni amalga oshirmoqchimisiz?')) {
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.style.display = 'none';
+        form.action = '';
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        
+        const actionInput = document.createElement('input');
+        actionInput.name = 'action';
+        actionInput.value = 'complete_order';
+        
+        form.appendChild(csrfInput);
+        form.appendChild(actionInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Функции для страницы заказов
+function initializeTableOrder() {
+    // Таймер
+    let startTime = new Date();
+    
+    function updateTimeCounter() {
+        const now = new Date();
+        const diff = Math.floor((now - startTime) / 60000);
+        const timeCounter = document.getElementById('timeCounter');
+        if (timeCounter) {
+            timeCounter.textContent = diff + ' daqiqa';
+        }
+    }
+    
+    // Поиск
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const menuItems = document.querySelectorAll('.menu-item');
+            
+            menuItems.forEach(item => {
+                const name = item.querySelector('.item-name').textContent.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Категории
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    categoryButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Запускаем таймер
+    setInterval(updateTimeCounter, 60000);
+    updateTimeCounter();
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Если это страница заказа стола, инициализируем функции
+    if (document.querySelector('.table-order-page')) {
+        initializeTableOrder();
+    }
+    
+});

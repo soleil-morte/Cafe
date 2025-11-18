@@ -23,8 +23,10 @@ urlpatterns = [
     path('tables/<int:table_id>/edit/', table_edit, name='table_edit'),
     path('tables/<int:table_id>/delete/', table_delete, name='table_delete'),
     path('tables/<int:table_id>/toggle/', table_toggle, name='table_toggle'),
+    path('tables/<int:table_id>/order/', table_order, name='table_order'),  # НОВЫЙ URL
     
     # Заказы
     path('orders/', orders_list, name='orders'),
     path('orders/create/', order_create, name='order_create'),
+    path('orders/<int:order_id>/delete/', order_delete, name='order_delete'),
 ]

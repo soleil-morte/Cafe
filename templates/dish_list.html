@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+
+{% block title %}Меню - Кафе Уютное{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="page-header">
@@ -17,9 +20,23 @@
     <div class="dishes-grid">
         {% for dish in dishes %}
         <div class="dish-card">
-            <h3>{{ dish.name }}</h3>
-            <p class="price">{{ dish.price }} сум.</p>
-            <p class="description">{{ dish.description|default:"Описание скоро появится..." }}</p>
+            {% if dish.image %}
+            <div class="dish-image">
+                <img src="{{ dish.image.url }}" alt="{{ dish.name }}" class="img-fixed">
+            </div>
+            {% else %}
+            <div class="dish-image no-image">
+                🍽️
+            </div>
+            {% endif %}
+
+            <div class="dish-info">
+                <h3>{{ dish.name }}</h3>
+                <p class="price">{{ dish.price }} сум</p>
+                <p class="description">{{ dish.description|default:"Описание скоро появится..."|truncatewords:10 }}
+                </p>
+            </div>
+
             <div class="card-actions">
                 <a href="/menu/{{ dish.id }}/" class="btn btn-sm">👁️ Подробнее</a>
                 <a href="/menu/{{ dish.id }}/edit/" class="btn btn-sm">✏️ Изменить</a>

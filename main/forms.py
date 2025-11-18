@@ -15,7 +15,7 @@ class ProductForm(forms.ModelForm):
 class DishForm(forms.ModelForm):
     class Meta:
         model = Dish
-        fields = ['name', 'description', 'price']
+        fields = ['name', 'description', 'price', 'image']  # Добавили image
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название блюда'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Описание блюда'}),
@@ -43,7 +43,13 @@ class TableForm(forms.ModelForm):
         model = Table
         fields = ['number', 'seats', 'is_occupied']
         widgets = {
-            'number': forms.NumberInput(attrs={'class': 'form-control'}),
-            'seats': forms.NumberInput(attrs={'class': 'form-control'}),
+            'number': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Номер стола'}),
+            'seats': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Количество мест'}),
             'is_occupied': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+    
+    def clean_number(self):
+        number = self.cleaned_data['number']
+        if Table.objects.filter(number=number).exists():
+            raise forms.ValidationError("Стол с таким номером уже существует")
+        return number
