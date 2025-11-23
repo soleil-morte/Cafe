@@ -254,3 +254,67 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+// JavaScript для отображения конвертации в реальном времени
+document.addEventListener('DOMContentLoaded', function() {
+    function updateConversionInfo() {
+        document.querySelectorAll('.ingredient-form').forEach(form => {
+            const productSelect = form.querySelector('select[name$="-product"]');
+            const quantityInput = form.querySelector('input[name$="-quantity"]');
+            const unitSelect = form.querySelector('select[name$="-unit"]');
+            const conversionInfo = form.querySelector('.conversion-info');
+            
+            if (productSelect && quantityInput && unitSelect && conversionInfo) {
+                const productId = productSelect.value;
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const ingredientUnit = unitSelect.value;
+                
+                if (productId && quantity > 0) {
+                    // Здесь можно добавить AJAX запрос для получения информации о продукте
+                    // Пока просто покажем единицы
+                    conversionInfo.textContent = `Указано: ${quantity} ${ingredientUnit}`;
+                } else {
+                    conversionInfo.textContent = '';
+                }
+            }
+        });
+    }
+    
+    // Обновляем при изменении полей
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('select[name$="-product"], select[name$="-unit"], input[name$="-quantity"]')) {
+            updateConversionInfo();
+        }
+    });
+    
+    updateConversionInfo();
+});
+
+
+function addToOrder(dishId, name, price) {
+    // Можно добавить проверку доступности порций через AJAX
+    // Пока просто добавляем в заказ
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.style.display = 'none';
+    form.action = '';
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    
+    const actionInput = document.createElement('input');
+    actionInput.name = 'action';
+    actionInput.value = 'add_item';
+    
+    const dishInput = document.createElement('input');
+    dishInput.name = 'dish_id';
+    dishInput.value = dishId;
+    
+    form.appendChild(csrfInput);
+    form.appendChild(actionInput);
+    form.appendChild(dishInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}

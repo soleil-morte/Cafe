@@ -3,75 +3,180 @@ from django.core.validators import MinValueValidator
 from decimal import Decimal
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 
 # Create your models here.
+class User(AbstractUser):
+    ROLE_CHOICES = [
+        ('admin', 'Administrator'),
+        ('manager', 'Menejer'),
+        ('waiter', 'Ofitsiant'),
+        ('cook', 'Oshpaz'),
+        ('chef', 'Bosh Oshpaz'),
+        ('cashier', 'Kassir'),
+        ('storekeeper', 'Omborchi'),
+    ]
+    
+    phone_regex = RegexValidator(
+        regex=r'^\+998\d{9}$',
+        message="Telefon raqam +998xxxxxxx formatida bo'lishi kerak."
+    )
+    
+    phone = models.CharField(max_length=13, unique=True, null=True, blank=True, validators=[phone_regex])
+    email = models.EmailField(unique=True)
+    full_name = models.CharField(max_length=120)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='waiter')
+    date_joined = models.DateTimeField(auto_now_add=True)
+
+
+    def save(self, *args, **kwargs):
+        if self.phone:
+            cleaned_number = ''.join(filter(str.isdigit, self.phone))
+            if cleaned_number.startswith('998') and len(cleaned_number) == 12:
+                self.phone = f"+{cleaned_number}"
+            elif not cleaned_number.startswith('+998'):
+                raise ValueError("Telefon raqam noto'g'ri formatda")
+            
+            
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.full_name} ({self.get_role_display()})"
+
+    # Методы для проверки ролей
+    def is_administrator(self):
+        return self.role == 'admin'
+    
+    def is_manager(self):
+        return self.role == 'manager'
+    
+    def is_waiter(self):
+        return self.role == 'waiter'
+    
+    def is_cook(self):
+        return self.role == 'cook'
+    
+    def is_chef(self):
+        return self.role == 'chef'
+    
+    def is_cashier(self):
+        return self.role == 'cashier'
+    
+    def is_storekeeper(self):
+        return self.role == 'storekeeper'
+
+    class Meta:
+        swappable = 'AUTH_USER_MODEL'
+     
         
 class Product(models.Model):
     name = models.CharField(max_length=100)
     unit = models.CharField(max_length=20, choices=[
-        ('kg', 'кг'),
-        ('liters', 'л'), 
-        ('pieces', 'шт'),
-        ('grams', 'г')
+        ('kg', 'кг'), ('liters', 'л'), ('pieces', 'шт'), ('g', 'г')
     ])
-    quantity = models.FloatField(default=0) 
+    quantity = models.FloatField(default=0)
+    reserved_quantity = models.FloatField(default=0)  # Новое поле для резервирования
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
         return f"{self.name} ({self.quantity} {self.unit})"
+    
+    def available_quantity(self):
+        """Доступное количество (общее - зарезервированное)"""
+        return max(0, self.quantity - self.reserved_quantity)
+    
+    def reserve(self, amount):
+        """Зарезервировать количество"""
+        if amount <= 0:
+            return True
+            
+        if self.available_quantity() >= amount:
+            self.reserved_quantity += amount
+            self.save()
+            return True
+        return False
+    
+    def release_reservation(self, amount):
+        """Освободить резервирование"""
+        self.reserved_quantity = max(0, self.reserved_quantity - amount)
+        self.save()
+    
+    def commit_reservation(self, amount):
+        """Подтвердить резервирование - списать продукты"""
+        if amount <= self.reserved_quantity:
+            self.quantity -= amount
+            self.reserved_quantity -= amount
+            self.save()
+            return True
+        return False
 
 class Dish(models.Model):
-    image = models.ImageField( upload_to='dishes/', blank=True, null=True,)
+    image = models.ImageField(upload_to='dishes/', blank=True, null=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    portions = models.PositiveIntegerField(default=0, verbose_name='Доступные порции')
     
     def __str__(self):
         return f"{self.name} - {self.price} сум."
+    
+    def add_portions(self, quantity):
+        """Добавить порции и списать продукты со склада"""
+        # Проверяем хватает ли продуктов
+        for ingredient in self.ingredients.all():
+            required_quantity = ingredient.get_quantity_in_product_units() * quantity
+            if ingredient.product.quantity < required_quantity:
+                return False, f"Недостаточно {ingredient.product.name}"
+        
+        # Списываем продукты
+        for ingredient in self.ingredients.all():
+            required_quantity = ingredient.get_quantity_in_product_units() * quantity
+            ingredient.product.quantity -= required_quantity
+            ingredient.product.save()
+        
+        # Добавляем порции
+        self.portions += quantity
+        self.save()
+        return True, "Успешно"
+    
+    def use_portions(self, quantity):
+        """Использовать порции для заказа"""
+        if self.portions >= quantity:
+            self.portions -= quantity
+            self.save()
+            return True
+        return False
 
 class DishIngredient(models.Model):
     UNIT_CHOICES = [
-        ('kg', 'кг'),
-        ('g', 'г'), 
-        ('liters', 'л'),
-        ('ml', 'мл'),
-        ('pieces', 'шт'),
+        ('kg', 'кг'), ('g', 'г'), ('liters', 'л'), ('ml', 'мл'), ('pieces', 'шт'),
     ]
     
     dish = models.ForeignKey(Dish, on_delete=models.CASCADE, related_name='ingredients')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.FloatField(default=0)
-    unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default='g') 
+    unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default='g')
     
     def __str__(self):
         return f"{self.product.name} - {self.quantity} {self.get_unit_display()}"
     
     def get_quantity_in_product_units(self):
         """Конвертирует количество в единицы измерения продукта на складе"""
-        # Если единицы совпадают, возвращаем как есть
         if self.unit == self.product.unit:
             return self.quantity
         
-        # Таблица конвертации
         conversion_rates = {
-            # кг ↔ г
-            ('kg', 'g'): 1000,
-            ('g', 'kg'): 0.001,
-            # литры ↔ мл
-            ('liters', 'ml'): 1000,
-            ('ml', 'liters'): 0.001,
-            # штуки (предполагаем средний вес)
-            ('pieces', 'kg'): 0.1,    # 1 шт ≈ 0.1 кг
-            ('kg', 'pieces'): 10,     # 1 кг ≈ 10 шт
-            ('pieces', 'g'): 100,     # 1 шт ≈ 100 г
-            ('g', 'pieces'): 0.01,    # 1 г ≈ 0.01 шт
+            ('kg', 'g'): 1000, ('g', 'kg'): 0.001,
+            ('liters', 'ml'): 1000, ('ml', 'liters'): 0.001,
+            ('pieces', 'kg'): 0.1, ('kg', 'pieces'): 10,
+            ('pieces', 'g'): 100, ('g', 'pieces'): 0.01,
         }
         
         rate = conversion_rates.get((self.unit, self.product.unit))
         if rate:
             return self.quantity * rate
         else:
-            # Если конвертация не определена, возвращаем исходное количество
             return self.quantity
 
 

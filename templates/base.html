@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,18 +9,43 @@
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
     <header>
         <nav class="navbar">
             <div class="nav-container">
                 <h1 class="logo">🍽️ Кафе Уютное</h1>
                 <ul class="nav-menu">
+
+                    {% if request.user.is_authenticated %}
+                    <li><a href="{% url 'logout' %}">LogOut</a></li>
+                    {% else %}
+                    <li><a href="{% url 'login' %}">LogIn</a></li>
+                    <li><a href="{% url 'register' %}">Ro‘yxatdan o‘tish</a></li>
+                    {% endif %}
+
                     <li><a href="/">Главная</a></li>
                     <li><a href="/menu/">Меню</a></li>
+
+                    {% if request.user.is_waiter or request.user.is_administrator or request.user.is_manager %}
                     <li><a href="/orders/create/">Взять Заказ</a></li>
+                    {% endif %}
+
+                    {% if request.user.is_waiter or request.user.is_administrator or request.user.is_manager %}
                     <li><a href="/tables/">Столы</a></li>
+                    {% endif %}
+
+                    {% if request.user.is_storekeeper or request.user.is_administrator or request.user.is_manager %}
                     <li><a href="/stock/">Склад</a></li>
+                    {% endif %}
+
+                    {% if request.user.is_waiter or request.user.is_administrator or request.user.is_manager or request.user.is_chef %}
                     <li><a href="/orders/">Заказы</a></li>
+                    {% endif %}
+
+                    {% if request.user.is_administrator or request.user.is_manager %}
+                    <li><a href="/admin/" class="admin-link">Админ</a></li>
+                    {% endif %}
                 </ul>
             </div>
         </nav>
@@ -36,6 +62,9 @@
         </div>
     </footer>
 
+    {{ request.user.username }}
+
     <script src="/static/js/script.js"></script>
 </body>
+
 </html>

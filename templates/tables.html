@@ -6,7 +6,9 @@
 <div class="container">
     <div class="page-header">
         <h1>🪑 Столы</h1>
+        {% if request.user.is_administrator or request.user.is_manager  %}
         <a href="/tables/add/" class="btn primary">➕ Добавить стол</a>
+        {% endif %}
     </div>
     
     {% if messages %}
@@ -36,15 +38,19 @@
                 <a href="/tables/{{ table.id }}/toggle/" class="btn btn-sm">
                     {% if table.is_occupied %}🟢 Освободить{% else %}🔴 Занять{% endif %}
                 </a>
+                {% if request.user.is_administrator or request.user.is_manager %}
                 <a href="/tables/{{ table.id }}/edit/" class="btn btn-sm">✏️ Изменить</a>
                 <a href="/tables/{{ table.id }}/delete/" class="btn btn-sm danger"
-                   onclick="return confirm('Удалить стол {{ table.number }}?')">🗑️ Удалить</a>
+                onclick="return confirm('Удалить стол {{ table.number }}?')">🗑️ Удалить</a>
+                {% endif %}
             </div>
         </div>
         {% empty %}
         <div class="empty-state">
             <p>🪑 Пока нет столов</p>
+            {% if request.user.is_administrator or request.user.is_manager %}
             <a href="/tables/add/" class="btn primary">Добавить первый стол</a>
+            {% endif %}
         </div>
         {% endfor %}
     </div>

@@ -70,6 +70,13 @@
                         <div class="item-description">{{ dish.description|default:"Mazzali taom" }}</div>
                         <div class="item-footer">
                             <div class="item-price">{{ dish.price }} so'm</div>
+                            <div>
+                                {% if dish.portions > 0 %}
+                                ✅ {{ dish.portions }} portsiya
+                                {% else %}
+                                ❌ Portsiya yo'q
+                                {% endif %}
+                            </div>
                             <div class="add-btn">
                                 <i class="fas fa-plus"></i>
                             </div>

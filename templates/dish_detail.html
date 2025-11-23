@@ -28,20 +28,32 @@
             <h3>💰 Расчет стоимости</h3>
             <p><strong>Себестоимость:</strong> {{ cost|floatformat:2 }} сум</p>
             <p><strong>Прибыль с порции:</strong> {{ profit|floatformat:2 }} сум</p>
+            <p><strong>Наценка:</strong> 
+                {% if cost > 0 %}
+                {{ dish.price|floatformat:2 }} / {{ cost|floatformat:2 }} = {{ dish_price_ratio|floatformat:1 }}x
+                {% else %}
+                Не рассчитано
+                {% endif %}
+            </p>
         </div>
 
         <div class="ingredients-list">
-            <h3>🥘 Ингредиенты</h3>
+            <h3>🥘 Ингредиенты (на одну порцию)</h3>
             {% for item in ingredients_with_cost %}
             <div class="ingredient-item">
-                <span class="ingredient-name">{{ item.ingredient.product.name }}</span>
-                <span class="ingredient-quantity">
-                    {{ item.ingredient.quantity }} {{ item.ingredient.product.get_unit_display }}
-                </span>
-                <span class="ingredient-cost">
-                    {{ item.ingredient.quantity }} × {{ item.ingredient.product.purchase_price }} =
+                <div class="ingredient-name">{{ item.ingredient.product.name }}</div>
+                <div class="ingredient-quantity">
+                    {{ item.ingredient.quantity }} {{ item.ingredient.get_unit_display }}
+                    {% if item.ingredient.unit != item.ingredient.product.unit %}
+                    <br><small style="color: #666;">
+                        = {{ item.converted_quantity|floatformat:3 }} {{ item.ingredient.product.get_unit_display }} на складе
+                    </small>
+                    {% endif %}
+                </div>
+                <div class="ingredient-cost">
+                    {{ item.converted_quantity|floatformat:3 }} × {{ item.ingredient.product.purchase_price }} =
                     {{ item.cost|floatformat:2 }} сум.
-                </span>
+                </div>
             </div>
             {% empty %}
             <p>Ингредиенты не добавлены</p>

@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404 
 from django.contrib import messages
 from django.http import JsonResponse
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
 from .models import *
 from .forms import *
 
 # Create your views here.
+@login_required
 def Index(request):
     context = {
         'dishes_count': Dish.objects.count(),
@@ -53,7 +56,12 @@ def product_delete(request, product_id):
 # Блюда - CRUD
 def dish_list(request):
     dishes = Dish.objects.all()
-    return render(request, 'dish_list.html', {'dishes': dishes})
+    has_planned_dishes = dishes.filter(portions__gt=0).exists()
+    
+    return render(request, 'dish_list.html', {
+        'dishes': dishes,
+        'has_planned_dishes': has_planned_dishes
+    })
 
 def dish_add(request):
     if request.method == 'POST':
@@ -110,21 +118,34 @@ def dish_detail(request, dish_id):
     ingredients_with_cost = []
     
     for ingredient in ingredients:
-        # Теперь quantity - float, purchase_price - Decimal
-        ingredient_cost = ingredient.quantity * float(ingredient.product.purchase_price)
+        converted_quantity = ingredient.get_quantity_in_product_units()
+        ingredient_cost = converted_quantity * float(ingredient.product.purchase_price)
         cost += ingredient_cost
         ingredients_with_cost.append({
             'ingredient': ingredient,
+            'converted_quantity': converted_quantity,
             'cost': ingredient_cost
         })
     
     profit = float(dish.price) - cost
     
+    # Расчет коэффициента наценки
+    if cost > 0:
+        dish_price_ratio = float(dish.price) / cost
+    else:
+        dish_price_ratio = 0
+    
+    # Получаем количество доступных порций
+    available_portions = dish.get_available_portions()
+    
     return render(request, 'dish_detail.html', {
         'dish': dish,
         'ingredients_with_cost': ingredients_with_cost,
         'cost': cost,
-        'profit': profit
+        'profit': profit,
+        'dish_price_ratio': dish_price_ratio,
+        'available_portions': available_portions,  # Добавляем количество порций
+        'can_be_prepared': available_portions > 0  # Можно ли приготовить
     })
 
 # Столы - CRUD
@@ -284,7 +305,17 @@ def table_order(request, table_id=None, order_id=None):
                 
                 messages.success(request, f'Заказ #{order.id} завершен! Продукты списаны со склада.')
             else:
-                messages.error(request, 'Недостаточно продуктов на складе для завершения заказа!')
+                order_items = order.order_items.all()
+                problematic_dishes = []
+        
+                for item in order_items:
+                    if item.dish.get_available_planned_portions() < item.quantity:
+                        problematic_dishes.append(
+                            f"{item.dish.name} (нужно: {item.quantity}, доступно: {item.dish.get_available_planned_portions()})"
+                        )
+        
+                messages.error(request, 
+                    f'Недостаточно запланированных порций для заказа! Проблемы: {", ".join(problematic_dishes)}')
             
             return redirect('orders')
             
@@ -318,42 +349,75 @@ def table_order(request, table_id=None, order_id=None):
     return render(request, 'table_order.html', context)
 
 def deduct_products_from_stock(order):
-    # Списание продуктов со склада на основе заказа с конвертацией единиц
-    try:
-        products_to_deduct = {}
-        
-        # Проходим по всем позициям заказа
-        for order_item in order.order_items.all():
-            dish = order_item.dish
-            quantity_ordered = order_item.quantity
-            
-            # Проходим по всем ингредиентам блюда
-            for ingredient in dish.ingredients.all():
-                product = ingredient.product
-                
-                # Конвертируем количество в единицы продукта на складе
-                quantity_needed = ingredient.get_quantity_in_product_units() * quantity_ordered
-                
-                # Добавляем к общему количеству для списания
-                if product.id in products_to_deduct:
-                    products_to_deduct[product.id] += quantity_needed
+    """Списать порции для заказа (теперь просто порции, без продуктов)"""
+    order_items = order.order_items.all()
+    
+    # Проверяем хватает ли порций
+    for item in order_items:
+        if item.dish.portions < item.quantity:
+            return False
+    
+    # Списываем порции
+    for item in order_items:
+        item.dish.use_portions(item.quantity)
+    
+    return True
+    
+    
+
+def register_view(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, f'Xush kelibsiz, {user.full_name}!')
+            return redirect('index')
+    else:
+        form = UserRegistrationForm()
+    
+    return render(request, 'auth/register.html', {'form': form})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = UserLoginForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Xush kelibsiz, {user.full_name}!')
+                return redirect('index')
+    else:
+        form = UserLoginForm()
+    
+    return render(request, 'auth/login.html', {'form': form})
+
+def logout_view(request):
+    logout(request)
+    messages.info(request, 'Siz tizimdan chiqdingiz!')
+    return redirect('login')
+
+
+@login_required
+def add_portions(request, dish_id):
+    """Добавить порции и списать продукты со склада"""
+    dish = get_object_or_404(Dish, id=dish_id)
+    
+    if request.method == 'POST':
+        portions = request.POST.get('portions', 0)
+        try:
+            portions = int(portions)
+            if portions > 0:
+                success, message = dish.add_portions(portions)
+                if success:
+                    messages.success(request, f'✅ Добавлено {portions} порций "{dish.name}"! Продукты списаны со склада.')
                 else:
-                    products_to_deduct[product.id] = quantity_needed
-        
-        # Проверяем достаточно ли продуктов на складе
-        for product_id, quantity_needed in products_to_deduct.items():
-            product = Product.objects.get(id=product_id)
-            if product.quantity < quantity_needed:
-                return False  # Недостаточно продуктов
-        
-        # Списание продуктов
-        for product_id, quantity_needed in products_to_deduct.items():
-            product = Product.objects.get(id=product_id)
-            product.quantity = max(0, product.quantity - quantity_needed)
-            product.save()
-        
-        return True
-        
-    except Exception as e:
-        print(f"Ошибка при списании продуктов: {e}")
-        return False
+                    messages.error(request, f'❌ Не удалось добавить порции: {message}')
+            else:
+                messages.error(request, 'Введите положительное число!')
+        except ValueError:
+            messages.error(request, 'Введите корректное число!')
+    
+    return redirect('menu')

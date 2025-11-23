@@ -30,6 +30,13 @@ urlpatterns = [
     path('orders/create/', order_create, name='order_create'),
     path('orders/<int:order_id>/', table_order, name='table_order_by_id'), 
     path('orders/<int:order_id>/delete/', order_delete, name='order_delete'),
+    
+    # Регистрация
+    path('register/', register_view, name='register'),
+    path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
+    
+    path('dish/<int:dish_id>/add-portions/', add_portions, name='add_portions'),
 ]
 
 

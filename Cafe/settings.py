@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = 'main.User'
 
 # Application definition
 
@@ -132,3 +133,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'username'
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
+
+LOGIN_URL = 'login'  # имя вашего URL для логина
+LOGIN_REDIRECT_URL = 'home'  # куда перенаправлять после логина
+LOGOUT_REDIRECT_URL = 'login'

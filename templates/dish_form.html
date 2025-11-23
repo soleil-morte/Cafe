@@ -53,14 +53,15 @@
                 {{ formset.management_form }}
                 <div class="ingredients-formset" id="ingredients-formset">
                     {% for form in formset %}
-                    <div class="ingredient-form">
+                    <div class="ingredient-form" data-product-unit="{{ form.instance.product.unit|default:'' }}">
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Продукт:</label>
                                 {{ form.product }}
-                                <small class="form-text" style="color: #666;">
-                                    На складе: {{ form.instance.product.quantity|default:0 }} {{
-                                    form.instance.product.get_unit_display|default:"" }}
+                                <small class="product-info" style="color: #666; display: block; margin-top: 5px;">
+                                    {% if form.instance.product %}
+                                    На складе: {{ form.instance.product.quantity }} {{ form.instance.product.get_unit_display }}
+                                    {% endif %}
                                 </small>
                             </div>
                             <div class="form-group">
@@ -70,6 +71,9 @@
                             <div class="form-group">
                                 <label>Единица:</label>
                                 {{ form.unit }}
+                                <small class="conversion-info" style="color: #2196F3; display: block; margin-top: 5px;">
+                                    <!-- Здесь будет показываться конвертация -->
+                                </small>
                             </div>
                             <div class="form-group delete-group">
                                 <label>Удалить:</label>
@@ -85,4 +89,5 @@
         </form>
     </div>
 </div>
+
 {% endblock %}

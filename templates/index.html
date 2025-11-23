@@ -16,33 +16,45 @@
                 <p class="stat-number">{{ dishes_count }}</p>
                 <a href="/menu/" class="btn">Управление меню</a>
             </div>
-            
+
+            {% if request.user.is_storekeeper or request.user.is_administrator or request.user.is_manager %}
             <div class="stat-card">
                 <h3>📦 Продукты на складе</h3>
                 <p class="stat-number">{{ products_count }}</p>
                 <a href="/stock/" class="btn">Управление складом</a>
             </div>
-            
+            {% endif %}
+
+            {% if request.user.is_waiter or request.user.is_administrator or request.user.is_manager %}
             <div class="stat-card">
                 <h3>🪑 Столы</h3>
                 <p class="stat-number">{{ tables_count }}</p>
                 <a href="/tables/" class="btn">Просмотр столов</a>
             </div>
-            
+            {% endif %}
+
+            {% if request.user.is_waiter or request.user.is_cook or request.user.is_chef or request.user.is_administrator or request.user.is_manager %}
             <div class="stat-card">
                 <h3>📋 Активные заказы</h3>
                 <p class="stat-number">{{ active_orders_count }}</p>
                 <a href="/orders/" class="btn">Управление заказами</a>
             </div>
+            {% endif %}
         </div>
     </section>
 
     <section class="quick-actions">
         <h3>Быстрые действия</h3>
         <div class="action-buttons">
+            {% if request.user.is_administrator or request.user.is_manager or request.user.is_cook or request.user.is_chef %}
             <a href="/menu/add/" class="btn primary">➕ Добавить блюдо</a>
+            {% endif %}
+            {% if request.user.is_storekeeper or request.user.is_administrator or request.user.is_manager %}
             <a href="/stock/add/" class="btn primary">📥 Принять товар</a>
+            {% endif %}
+            {% if request.user.is_waiter or request.user.is_administrator or request.user.is_manager %}
             <a href="/orders/create/" class="btn primary">📝 Создать заказ</a>
+            {% endif %}
         </div>
     </section>
 </div>
