@@ -1,71 +1,59 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Заказы - Кафе Уютное{% endblock %}
+{% block title %}Buyurtmalar - Restaurant Pro{% endblock %}
+{% block page_title %}Buyurtmalar{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1>📋 Все заказы</h1>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h1>Barcha Buyurtmalar</h1>
+    <a href="{% url 'order_create' %}" class="btn btn-primary">+ Yangi Buyurtma</a>
+</div>
+
+<div class="table">
+    <div class="table-header">
+        <div>Buyurtma</div>
+        <div>Mijoz</div>
+        <div>Tur</div>
+        <div>Summa</div>
+        <div>Holat</div>
+        <div>Amallar</div>
     </div>
-
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <div class="orders-grid">
-        {% for order in orders %}
-        <div class="order-card glass" style="padding: 2rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
-            <div class="order-header"
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3>Заказ #{{ order.id }}</h3>
-                <div class="order-status {% if order.is_completed %}completed{% else %}active{% endif %}">
-                    {% if order.is_completed %}✅ Завершен{% else %}🟡 Активен{% endif %}
-                </div>
-            </div>
-            
-            <div class=" order-info" style="margin-bottom: 1.5rem;">
-                    <p><strong>Стол:</strong> {{ order.table.number }}</p>
-                    <p><strong>Создан:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
-                    <p><strong>Общая сумма:</strong> {{ order.total_price }} сум</p>
-                </div>
-
-                <div class="order-items" style="margin-bottom: 1.5rem;">
-                    <h4 style="margin-bottom: 0.5rem;">Блюда:</h4>
-                    {% for item in order.order_items.all %}
-                    <div
-                        style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span>{{ item.dish.name }} x{{ item.quantity }}</span>
-                        <span>{{ item.total }} сум</span>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <div class="order-actions" style="display: flex; gap: 0.5rem;">
-                    {% if not order.is_completed %}
-                    <a href="/tables/{{ order.table.id }}/order/" class="btn btn-sm"
-                        style="background: var(--primary); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px;">
-                        📝 Продолжить заказ
-                    </a>
-                    {% endif %}
-                    <form method="post" action="{% url 'order_delete' order.id %}" style="display: inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm danger"
-                            onclick="return confirm('Удалить заказ #{{ order.id }}?')"
-                            style="background: var(--error); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
-                            🗑️ Удалить
-                        </button>
-                    </form>
-                </div>
-            </div>
-            {% empty %}
-            <div class="empty-state glass" style="text-align: center; padding: 3rem; border-radius: var(--radius);">
-                <p style="font-size: 1.2rem; color: rgba(255,255,255,0.7);">Пока нет заказов</p>
-            </div>
-            {% endfor %}
+    
+    {% for order in orders %}
+    <div class="table-row">
+        <div>
+            <strong>#{{ order.id }}</strong>
+            <div style="font-size: 0.8rem; color: #666;">{{ order.created_at|date:"H:i d/m/Y" }}</div>
+        </div>
+        <div>
+            {% if order.customer_name %}
+                {{ order.customer_name }}
+                {% if order.phone_number %}<br><small>{{ order.phone_number }}</small>{% endif %}
+            {% else %}
+                Noma'lum
+            {% endif %}
+        </div>
+        <div>{{ order.get_order_type_display }}</div>
+        <div><strong>{{ order.total_price }} so'm</strong></div>
+        <div>
+            <span style="background: {% if order.is_completed %}var(--success){% else %}var(--warning){% endif %}; 
+                      color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">
+                {% if order.is_completed %}✅ Bajarildi{% else %}🔄 Jarayonda{% endif %}
+            </span>
+        </div>
+        <div class="action-buttons">
+            <a href="{% url 'table_order_by_id' order.id %}" class="btn" style="background: var(--info); color: white; padding: 8px 12px; font-size: 0.9rem;">👁️</a>
+            {% if not order.is_completed %}
+            <a href="{% url 'order_delete' order.id %}" class="btn" style="background: var(--danger); color: white; padding: 8px 12px; font-size: 0.9rem;" onclick="return confirm('Buyurtmani o\'chirmoqchimisiz?')">🗑️</a>
+            {% endif %}
         </div>
     </div>
-    {% endblock %}
+    {% empty %}
+    <div class="table-row">
+        <div colspan="6" style="text-align: center; padding: 40px; color: #666;">
+            Hozircha buyurtmalar mavjud emas
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

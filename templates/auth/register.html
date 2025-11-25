@@ -1,73 +1,40 @@
 {% extends 'base.html' %}
-{% load static %}
+
+{% block title %}Ro'yxatdan o'tish - Restaurant Pro{% endblock %}
+{% block page_title %}Ro'yxatdan o'tish{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <div class="auth-header">
-            <h2>Ro'yxatdan o'tish</h2>
-            <p>Yangi hisob yarating</p>
-        </div>
+<div style="max-width: 500px; margin: 50px auto; background: white; padding: 40px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div class="logo" style="margin: 0 auto 20px auto; width: 60px; height: 60px; font-size: 1.5rem;">RP</div>
+        <h1>Ro'yxatdan o'tish</h1>
+        <p style="color: #666;">Yangi hisob yarating</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
         
-        <form method="post" class="auth-form">
-            {% csrf_token %}
-            
-            {% if form.errors %}
-            <div class="alert alert-danger">
-                {% for field in form %}
-                    {% for error in field.errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
-                {% endfor %}
-                {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
+        {% for field in form %}
+        <div class="form-group">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div style="color: var(--danger); font-size: 0.9rem; margin-top: 5px;">
+                {{ field.errors }}
             </div>
             {% endif %}
-            
-            <div class="form-group">
-                <label>Username</label>
-                {{ form.username }}
-                <small class="form-text">Foydalanuvchi nomi (majburiy)</small>
-            </div>
-            
-            <div class="form-group">
-                <label>To'liq ism</label>
-                {{ form.full_name }}
-            </div>
-            
-            <div class="form-group">
-                <label>Email</label>
-                {{ form.email }}
-            </div>
-            
-            <div class="form-group">
-                <label>Telefon raqam</label>
-                {{ form.phone }}
-                <small class="form-text">Format: +998901234567</small>
-            </div>
-            
-            <div class="form-group">
-                <label>Lavozim</label>
-                {{ form.role }}
-            </div>
-            
-            <div class="form-group">
-                <label>Parol</label>
-                {{ form.password1 }}
-            </div>
-            
-            <div class="form-group">
-                <label>Parolni tasdiqlang</label>
-                {{ form.password2 }}
-            </div>
-            
-            <button type="submit" class="btn btn-primary btn-block">Ro'yxatdan o'tish</button>
-        </form>
-        
-        <div class="auth-footer">
-            <p>Allaqachon hisobingiz bormi? <a href="{% url 'login' %}">Tizimga kirish</a></p>
         </div>
-    </div>
+        {% endfor %}
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; margin-top: 20px;">
+            Ro'yxatdan o'tish
+        </button>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{% url 'login' %}" style="color: var(--secondary); text-decoration: none;">
+                ← Hisobingiz bormi? Tizimga kiring
+            </a>
+        </div>
+    </form>
 </div>
 {% endblock %}

@@ -1,169 +1,137 @@
-{% extends "base.html" %}
-{% load static %}
+{% extends 'base.html' %}
+
+{% block title %}Buyurtma #{{ order.id }} - Restaurant Pro{% endblock %}
+{% block page_title %}Buyurtma #{{ order.id }}{% endblock %}
 
 {% block content %}
-<div class="table-order-page">
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-top">
-                <div class="stol-info">
-                    <div class="stol-number">STOL {{ table.number }}</div>
-                    <div class="stol-status {% if table.is_occupied %}occupied{% else %}free{% endif %}">
-                        {% if table.is_occupied %}ACTIVE{% else %}FREE{% endif %}
-                    </div>
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+    <!-- Buyurtma qismi -->
+    <div style="background: white; padding: 25px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px;">
+            <div>
+                <h1 style="margin-bottom: 5px;">Buyurtma #{{ order.id }}</h1>
+                <div style="color: #666;">
+                    {% if table %}
+                    🪑 Stol {{ table.number }} • {{ table.seats }} kishi
+                    {% else %}
+                    {{ order.get_order_type_display }}
+                    {% endif %}
+                    • {{ order.created_at|date:"H:i d/m/Y" }}
                 </div>
-                <div class="customer-info">
-                    <div class="info-item">
-                        <i class="fas fa-users"></i>
-                        <span>{{ table.seats }} kishi</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-clock"></i>
-                        <span id="timeCounter">0 daqiqa</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-user"></i>
-                        <span>Xizmatkoh: Admin</span>
-                    </div>
-                </div>
+            </div>
+            <div style="background: {% if order.is_completed %}var(--success){% else %}var(--warning){% endif %}; color: white; padding: 8px 16px; border-radius: var(--border-radius); font-weight: 600;">
+                {% if order.is_completed %}✅ Bajarildi{% else %}🔄 Jarayonda{% endif %}
             </div>
         </div>
-
-        <!-- Menu Section -->
-        <div class="menu-section">
-            <h2 class="section-title">
-                <i class="fas fa-utensils"></i>
-                Menyu
-            </h2>
-
-            <div class="categories">
-                <button class="category-btn active">Hammasi</button>
-                <button class="category-btn">Ichimliklar</button>
-                <button class="category-btn">Salatlar</button>
-                <button class="category-btn">Shashlik</button>
-                <button class="category-btn">Desertlar</button>
-                <button class="category-btn">Nonushta</button>
-            </div>
-
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Taom nomi bo'yicha qidirish..." id="searchInput">
-            </div>
-
-            <div class="menu-grid">
+        
+        <!-- Taomlar qo'shish -->
+        <h3 style="margin-bottom: 20px;">Taom qo'shish</h3>
+        <form method="post" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; margin-bottom: 30px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_item">
+            
+            <select name="dish_id" class="form-control" required>
+                <option value="">Taomni tanlang</option>
                 {% for dish in dishes %}
-                <div class="menu-item" onclick="addToOrder({{ dish.id }}, '{{ dish.name }}', {{ dish.price }})">
-                    <div class="item-image">
-                        {% if dish.image %}
-                        <img src="{{ dish.image.url }}" alt="{{ dish.name }}"
-                            style="width: 100%; height: 160px; object-fit: cover;">
-                        {% else %}
-                        <div
-                            style="width: 100%; height: 160px; background: linear-gradient(45deg, #f0f0f0, #e0e0e0); display: flex; align-items: center; justify-content: center; color: #6b7280;">
-                            🍽️
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="item-details">
-                        <div class="item-name">{{ dish.name }}</div>
-                        <div class="item-description">{{ dish.description|default:"Mazzali taom" }}</div>
-                        <div class="item-footer">
-                            <div class="item-price">{{ dish.price }} so'm</div>
-                            <div>
-                                {% if dish.portions > 0 %}
-                                ✅ {{ dish.portions }} portsiya
-                                {% else %}
-                                ❌ Portsiya yo'q
-                                {% endif %}
-                            </div>
-                            <div class="add-btn">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <option value="{{ dish.id }}" {% if dish.portions == 0 %}disabled style="color: #ccc;"{% endif %}>
+                    {{ dish.name }} - {{ dish.price }} so'm {% if dish.portions == 0 %}(Portiya yo'q){% endif %}
+                </option>
                 {% endfor %}
+            </select>
+            
+            <input type="number" name="quantity" value="1" min="1" class="form-control" required>
+            
+            <button type="submit" class="btn btn-primary">Qo'shish</button>
+        </form>
+        
+        <!-- Buyurtma ro'yxati -->
+        <h3 style="margin-bottom: 20px;">Buyurtma ro'yxati</h3>
+        
+        {% if order_items %}
+        <div class="table">
+            <div class="table-header">
+                <div>Taom</div>
+                <div>Narx</div>
+                <div>Soni</div>
+                <div>Summa</div>
+                <div>Amallar</div>
             </div>
+            
+            {% for item in order_items %}
+            <div class="table-row">
+                <div>
+                    <strong>{{ item.dish.name }}</strong>
+                    {% if item.dish.portions < item.quantity %}
+                    <div style="color: var(--danger); font-size: 0.8rem;">⚠️ Portiya yetarli emas</div>
+                    {% endif %}
+                </div>
+                <div>{{ item.dish.price }} so'm</div>
+                <div>
+                    <form method="post" style="display: flex; gap: 5px; align-items: center;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_quantity">
+                        <input type="hidden" name="order_item_id" value="{{ item.id }}">
+                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" style="width: 60px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                        <button type="submit" class="btn" style="padding: 5px 8px; background: var(--info); color: white;">🔄</button>
+                    </form>
+                </div>
+                <div><strong>{{ item.total }} so'm</strong></div>
+                <div class="action-buttons">
+                    <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="remove_item">
+                        <input type="hidden" name="order_item_id" value="{{ item.id }}">
+                        <button type="submit" class="btn" style="background: var(--danger); color: white; padding: 5px 8px;">🗑️</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-
-        <!-- Order Summary -->
-        <div class="order-summary">
-            <h2 class="section-title">
-                <i class="fas fa-receipt"></i>
-                Buyurtma
-            </h2>
-
-            <div class="order-items" id="orderItems">
-                {% for item in order_items %}
-                <div class="order-item">
-                    <div class="order-item-image">
-                        {% if item.dish.image %}
-                        <img src="{{ item.dish.image.url }}" alt="{{ item.dish.name }}"
-                            style="width: 60px; height: 60px; object-fit: cover;">
-                        {% else %}
-                        <div
-                            style="width: 60px; height: 60px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #6b7280;">
-                            🍽️
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="order-item-info">
-                        <div class="order-item-name">{{ item.dish.name }}</div>
-                        <div class="order-item-price">{{ item.dish.price }} so'm</div>
-                    </div>
-                    <div class="quantity-controls">
-                        <button class="quantity-btn" onclick="updateQuantity({{ item.id }}, -1, this)">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <span class="quantity" id="quantity-{{ item.id }}">{{ item.quantity }}</span>
-                        <button class="quantity-btn" onclick="updateQuantity({{ item.id }}, 1, this)">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                    <div class="remove-btn" onclick="removeItem({{ item.id }})">
-                        <i class="fas fa-trash"></i>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="empty-order">
-                    Hali buyurtma qo'shilmagan
-                </div>
-                {% endfor %}
-            </div>
-
-            <div class="order-total">
-                <div class="total-line">
-                    <span>Jami:</span>
-                    <span id="subtotal">{{ subtotal|floatformat:2 }} so'm</span>
-                </div>
-                <div class="total-line">
-                    <span>Xizmat (10%):</span>
-                    <span id="service">{{ service_fee|floatformat:2 }} so'm</span>
-                </div>
-                <div class="total-line grand-total">
-                    <span>Umumiy:</span>
-                    <span id="total">{{ total_with_service|floatformat:2 }} so'm</span>
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="printCheck()">
-                    <i class="fas fa-print"></i>
-                    Chek Chop etish
-                </button>
-                <form method="post" style="display: inline; flex: 1;">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="complete_order">
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-check"></i>
-                        To'lov qilish
-                    </button>
-                </form>
-            </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px; color: #666; background: var(--light); border-radius: var(--border-radius);">
+            <div style="font-size: 3rem; margin-bottom: 15px;">🍽️</div>
+            <h4>Hozircha buyurtmalar yo'q</h4>
+            <p>Yuqoridan taom qo'shing</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Hisob-kitob qismi -->
+    <div style="background: white; padding: 25px; border-radius: var(--border-radius); box-shadow: var(--shadow); height: fit-content;">
+        <h3 style="margin-bottom: 20px;">Hisob-kitob</h3>
+        
+        <div style="display: flex; justify-content: between; margin-bottom: 15px;">
+            <span>Jami:</span>
+            <span><strong>{{ subtotal }} so'm</strong></span>
+        </div>
+        
+        <div style="display: flex; justify-content: between; margin-bottom: 15px; color: #666;">
+            <span>Xizmat xaqqi (10%):</span>
+            <span>{{ service_fee|floatformat:2 }} so'm</span>
+        </div>
+        
+        <hr style="margin: 20px 0; border: none; border-top: 2px solid var(--light);">
+        
+        <div style="display: flex; justify-content: between; margin-bottom: 25px; font-size: 1.2rem; font-weight: 700;">
+            <span>Umumiy summa:</span>
+            <span style="color: var(--success);">{{ total_with_service|floatformat:2 }} so'm</span>
+        </div>
+        
+        {% if not order.is_completed %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="complete_order">
+            <button type="submit" class="btn btn-success" style="width: 100%; padding: 15px; font-size: 1.1rem;">
+                ✅ Buyurtmani yakunlash
+            </button>
+        </form>
+        {% endif %}
+        
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <a href="{% if table %}{% url 'tables' %}{% else %}{% url 'orders' %}{% endif %}" class="btn" style="background: var(--light); color: var(--dark); flex: 1; text-align: center;">
+                ← Orqaga
+            </a>
         </div>
     </div>
 </div>
-
-
 {% endblock %}

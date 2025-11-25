@@ -1,43 +1,47 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Склад - Кафе Уютное{% endblock %}
+{% block title %}Ombor - Restaurant Pro{% endblock %}
+{% block page_title %}Ombor Boshqaruvi{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1>📦 Склад</h1>
-        <a href="/stock/add/" class="btn primary">📥 Добавить продукт</a>
-    </div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h1>Mahsulotlar Ro'yxati</h1>
+    <a href="{% url 'product_add' %}" class="btn btn-primary">+ Yangi Mahsulot</a>
+</div>
 
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
+<div class="table">
+    <div class="table-header">
+        <div>Nomi</div>
+        <div>Miqdor</div>
+        <div>Birlik</div>
+        <div>Sotib olish narxi</div>
+        <div>Amallar</div>
     </div>
-    {% endif %}
-
-    <div class="products-grid">
-        {% for product in products %}
-        <div class="product-card">
-            <h3>{{ product.name }}</h3>
-            <div class="product-info">
-                <p>📊 Остаток: <strong>{{ product.quantity }} {{ product.get_unit_display }}</strong></p>
-                <p>💰 Цена: <strong>{{ product.purchase_price }} сум.</strong></p>
-                <p>🏷️ Единица: {{ product.get_unit_display }}</p>
-            </div>
-            <div class="card-actions">
-                <a href="/stock/{{ product.id }}/edit/" class="btn btn-sm">✏️ Изменить</a>
-                <a href="/stock/{{ product.id }}/delete/" class="btn btn-sm danger"
-                    onclick="return confirm('Удалить продукт {{ product.name }}?')">🗑️ Удалить</a>
-            </div>
+    
+    {% for product in products %}
+    <div class="table-row">
+        <div><strong>{{ product.name }}</strong></div>
+        <div>
+            <span {% if product.is_low_stock %}style="color: var(--danger); font-weight: 600;"{% endif %}>
+                {{ product.available_quantity }}
+            </span>
+            {% if product.reserved_quantity > 0 %}
+            <small style="color: var(--warning);">({{ product.reserved_quantity }} rezerv)</small>
+            {% endif %}
         </div>
-        {% empty %}
-        <div class="empty-state">
-            <p>📭 На складе пока нет товаров</p>
-            <a href="/stock/add/" class="btn primary">Добавить первый продукт</a>
+        <div>{{ product.get_unit_display }}</div>
+        <div>{{ product.purchase_price }} so'm</div>
+        <div class="action-buttons">
+            <a href="{% url 'product_edit' product.id %}" class="btn" style="background: var(--info); color: white; padding: 8px 12px; font-size: 0.9rem;">✏️</a>
+            <a href="{% url 'product_delete' product.id %}" class="btn" style="background: var(--danger); color: white; padding: 8px 12px; font-size: 0.9rem;" onclick="return confirm('{{ product.name }} ni o\'chirmoqchimisiz?')">🗑️</a>
         </div>
-        {% endfor %}
     </div>
+    {% empty %}
+    <div class="table-row">
+        <div colspan="5" style="text-align: center; padding: 40px; color: #666;">
+            Hozircha mahsulotlar mavjud emas
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

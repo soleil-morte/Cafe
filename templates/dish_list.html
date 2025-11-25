@@ -1,103 +1,61 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Меню - Кафе Уютное{% endblock %}
+{% block title %}Menyu - Restaurant Pro{% endblock %}
+{% block page_title %}Menyu Boshqaruvi{% endblock %}
 
 {% block content %}
-<div class="container">
-    {% if request.user.is_administrator or request.user.is_manager or request.user.is_chef or request.user.is_cook %}
-    <div class="page-header">
-        <h1>🍽️ Наше меню</h1>
-        <a href="/menu/add/" class="btn primary">➕ Добавить блюдо</a>
-
-
-    </div>
-    {% else %}
-    <div class="page-header">
-        <h1>🍽️ Наше меню</h1>
-    </div>
-    {% endif %}
-
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Глобальная информация о планировании -->
-    {% if global_availability and not global_availability.all_available %}
-    <div class="global-warning">
-        ⚠️ <strong>Внимание!</strong> Есть конфликты между блюдами:
-        {{ global_availability.conflicting_dishes|join:", " }}
-    </div>
-    {% endif %}
-
-    <div class="dishes-grid">
-        {% for dish in dishes %}
-        <div class="dish-card">
-            {% if dish.image %}
-            <div class="dish-image">
-                <img src="{{ dish.image.url }}" alt="{{ dish.name }}" class="img-fixed">
-            </div>
-            {% else %}
-            <div class="dish-image no-image">
-                🍽️
-            </div>
-            {% endif %}
-
-            <div class="dish-info">
-                <h3>{{ dish.name }}</h3>
-                <p class="price">{{ dish.price }} сум</p>
-
-                <!-- Информация о порциях -->
-                <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
-                    <div><strong>Доступно порций: {{ dish.portions }}</strong></div>
-
-                    <!-- Показываем ингредиенты для информации -->
-                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                        <strong>На 1 порцию нужно:</strong>
-                        {% for ingredient in dish.ingredients.all %}
-                        <div>{{ ingredient.product.name }}: {{ ingredient.quantity }} {{ ingredient.get_unit_display }}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Форма добавления порций -->
-                {% if request.user.is_cook or request.user.is_chef or request.user.is_administrator %}
-                <form method="post" action="{% url 'add_portions' dish.id %}">
-                    {% csrf_token %}
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="number" name="portions" value="1" min="1"
-                            style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        <button type="submit" class="btn btn-sm" style="padding: 8px 15px;">
-                            🍳 Приготовить порции
-                        </button>
-                    </div>
-                    <small style="color: #666;">Продукты спишутся со склада автоматически</small>
-                </form>
-                {% endif %}
-            </div>
-
-            <div class="card-actions">
-                <a href="/menu/{{ dish.id }}/" class="btn btn-sm">👁️ Подробнее</a>
-                {% if request.user.is_administrator or request.user.is_manager or request.user.is_chef or  request.user.is_cook %}
-                <a href="/menu/{{ dish.id }}/edit/" class="btn btn-sm">✏️ Изменить</a>
-                <a href="/menu/{{ dish.id }}/delete/" class="btn btn-sm danger"
-                    onclick="return confirm('Удалить блюдо {{ dish.name }}?')">🗑️ Удалить</a>
-                {% endif %}
-            </div>
-        </div>
-        {% empty %}
-        <div class="empty-state">
-            <p>🍽️ Пока нет блюд в меню</p>
-            {% if request.user.is_administrator or request.user.is_manager or request.user.is_chef or request.user.is_cook %}
-            <a href="/menu/add/" class="btn primary">Добавить первое блюдо</a>
-            {% endif %}
-        </div>
-        {% endfor %}
-    </div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h1>Taomlar Ro'yxati</h1>
+    <a href="{% url 'dish_add' %}" class="btn btn-primary">+ Yangi Taom</a>
 </div>
 
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;">
+    {% for dish in dishes %}
+    <div style="background: white; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--shadow);">
+        {% if dish.image %}
+        <div style="height: 200px; background-image: url('{{ dish.image.url }}'); background-size: cover; background-position: center;"></div>
+        {% else %}
+        <div style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem;">
+            🍽️
+        </div>
+        {% endif %}
+        
+        <div style="padding: 20px;">
+            <h3 style="margin-bottom: 10px;">{{ dish.name }}</h3>
+            {% if dish.description %}
+            <p style="color: #666; margin-bottom: 15px; font-size: 0.9rem;">{{ dish.description|truncatewords:20 }}</p>
+            {% endif %}
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="font-size: 1.3rem; font-weight: 700; color: var(--success);">
+                    {{ dish.price }} so'm
+                </div>
+                <div style="background: {% if dish.portions > 0 %}var(--success){% else %}var(--danger){% endif %}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">
+                    {{ dish.portions }} por.
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+                <a href="{% url 'dish_detail' dish.id %}" class="btn" style="background: var(--info); color: white; flex: 1; justify-content: center;">👁️ Ko'rish</a>
+                <a href="{% url 'dish_edit' dish.id %}" class="btn" style="background: var(--warning); color: white;">✏️</a>
+                <a href="{% url 'dish_delete' dish.id %}" class="btn" style="background: var(--danger); color: white;" onclick="return confirm('{{ dish.name }} ni o\'chirmoqchimisiz?')">🗑️</a>
+            </div>
+            
+            <!-- Portiya qo'shish formasi -->
+            <form method="post" action="{% url 'add_portions' dish.id %}" style="margin-top: 15px; display: flex; gap: 8px;">
+                {% csrf_token %}
+                <input type="number" name="portions" placeholder="Portiya soni" min="1" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: var(--border-radius);">
+                <button type="submit" class="btn btn-success" style="padding: 8px 12px;">+ Qo'shish</button>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: #666; background: white; border-radius: var(--border-radius);">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🍽️</div>
+        <h3>Hozircha taomlar mavjud emas</h3>
+        <p>Birinchi taomni qo'shing</p>
+        <a href="{% url 'dish_add' %}" class="btn btn-primary" style="margin-top: 20px;">+ Yangi Taom</a>
+    </div>
+    {% endfor %}
+</div>
 {% endblock %}

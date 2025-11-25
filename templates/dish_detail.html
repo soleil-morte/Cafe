@@ -1,64 +1,105 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}{{ dish.name }} - Кафе Уютное{% endblock %}
+{% block title %}{{ dish.name }} - Restaurant Pro{% endblock %}
+{% block page_title %}{{ dish.name }} Tafsilotlari{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1>{{ dish.name }}</h1>
-        <a href="/menu/" class="btn">← Назад к меню</a>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+    <!-- Taom ma'lumotlari -->
+    <div style="background: white; padding: 25px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+        {% if dish.image %}
+        <img src="{{ dish.image.url }}" alt="{{ dish.name }}" style="width: 100%; height: 300px; object-fit: cover; border-radius: var(--border-radius); margin-bottom: 20px;">
+        {% else %}
+        <div style="height: 300px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; color: white; font-size: 4rem; margin-bottom: 20px;">
+            🍽️
+        </div>
+        {% endif %}
+        
+        <h1 style="margin-bottom: 10px;">{{ dish.name }}</h1>
+        {% if dish.description %}
+        <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">{{ dish.description }}</p>
+        {% endif %}
+        
+        <div style="font-size: 2rem; font-weight: 700; color: var(--success); margin-bottom: 20px;">
+            {{ dish.price }} so'm
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <div style="background: {% if can_be_prepared %}var(--success){% else %}var(--danger){% endif %}; color: white; padding: 10px 20px; border-radius: var(--border-radius);">
+                🍲 {{ available_portions }} ta portiya
+            </div>
+            <div style="background: var(--info); color: white; padding: 10px 20px; border-radius: var(--border-radius);">
+                💰 {{ dish_price_ratio|floatformat:2 }}x marja
+            </div>
+        </div>
+        
+        <!-- Portiya qo'shish formasi -->
+        <form method="post" action="{% url 'add_portions' dish.id %}" style="display: flex; gap: 10px; margin-top: 20px;">
+            {% csrf_token %}
+            <input type="number" name="portions" placeholder="Portiya soni" min="1" required style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: var(--border-radius);">
+            <button type="submit" class="btn btn-success">Portiya qo'shish</button>
+        </form>
     </div>
-
-    <div class="dish-detail">
-        <div class="dish-header">
-            {% if dish.image %}
-            <div class="dish-image-large">
-                <img src="{{ dish.image.url }}" alt="{{ dish.name }}">
+    
+    <!-- Masalliqlar va xarajatlar -->
+    <div style="background: white; padding: 25px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+        <h3 style="margin-bottom: 20px;">Masalliqlar va Xarajatlar</h3>
+        
+        <div class="table">
+            <div class="table-header">
+                <div>Masalliq</div>
+                <div>Miqdor</div>
+                <div>Narxi</div>
+                <div>Summa</div>
             </div>
-            {% endif %}
-
-            <div class="dish-info">
-                <h3>📝 Информация</h3>
-                <p><strong>Цена:</strong> {{ dish.price }} сум</p>
-                <p><strong>Описание:</strong> {{ dish.description|default:"Нет описания" }}</p>
-            </div>
-        </div>
-
-        <div class="dish-cost">
-            <h3>💰 Расчет стоимости</h3>
-            <p><strong>Себестоимость:</strong> {{ cost|floatformat:2 }} сум</p>
-            <p><strong>Прибыль с порции:</strong> {{ profit|floatformat:2 }} сум</p>
-            <p><strong>Наценка:</strong> 
-                {% if cost > 0 %}
-                {{ dish.price|floatformat:2 }} / {{ cost|floatformat:2 }} = {{ dish_price_ratio|floatformat:1 }}x
-                {% else %}
-                Не рассчитано
-                {% endif %}
-            </p>
-        </div>
-
-        <div class="ingredients-list">
-            <h3>🥘 Ингредиенты (на одну порцию)</h3>
+            
             {% for item in ingredients_with_cost %}
-            <div class="ingredient-item">
-                <div class="ingredient-name">{{ item.ingredient.product.name }}</div>
-                <div class="ingredient-quantity">
-                    {{ item.ingredient.quantity }} {{ item.ingredient.get_unit_display }}
-                    {% if item.ingredient.unit != item.ingredient.product.unit %}
-                    <br><small style="color: #666;">
-                        = {{ item.converted_quantity|floatformat:3 }} {{ item.ingredient.product.get_unit_display }} на складе
-                    </small>
-                    {% endif %}
-                </div>
-                <div class="ingredient-cost">
-                    {{ item.converted_quantity|floatformat:3 }} × {{ item.ingredient.product.purchase_price }} =
-                    {{ item.cost|floatformat:2 }} сум.
+            <div class="table-row">
+                <div>{{ item.ingredient.product.name }}</div>
+                <div>{{ item.converted_quantity|floatformat:2 }} {{ item.ingredient.product.get_unit_display }}</div>
+                <div>{{ item.ingredient.product.purchase_price }} so'm</div>
+                <div>{{ item.cost|floatformat:2 }} so'm</div>
+            </div>
+            {% endfor %}
+            
+            <div class="table-row" style="background: var(--light); font-weight: 600;">
+                <div colspan="3">Jami xarajat</div>
+                <div>{{ cost|floatformat:2 }} so'm</div>
+            </div>
+            
+            <div class="table-row" style="background: #e8f5e8; font-weight: 600;">
+                <div colspan="3">Foyda</div>
+                <div style="color: var(--success);">{{ profit|floatformat:2 }} so'm</div>
+            </div>
+        </div>
+        
+        <!-- Statistika -->
+        <div style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: var(--border-radius);">
+                <div style="font-size: 0.9rem; color: #666;">Xarajat</div>
+                <div style="font-size: 1.2rem; font-weight: 600;">{{ cost|floatformat:2 }} so'm</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: var(--border-radius);">
+                <div style="font-size: 0.9rem; color: #666;">Foyda</div>
+                <div style="font-size: 1.2rem; font-weight: 600; color: var(--success);">{{ profit|floatformat:2 }} so'm</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: var(--border-radius);">
+                <div style="font-size: 0.9rem; color: #666;">Foyda %</div>
+                <div style="font-size: 1.2rem; font-weight: 600; color: var(--success);">
+                    {% if cost > 0 %}{{ profit|floatformat:0 }}%{% else %}0%{% endif %}
                 </div>
             </div>
-            {% empty %}
-            <p>Ингредиенты не добавлены</p>
-            {% endfor %}
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: var(--border-radius);">
+                <div style="font-size: 0.9rem; color: #666;">Marja</div>
+                <div style="font-size: 1.2rem; font-weight: 600; color: var(--info);">{{ dish_price_ratio|floatformat:1 }}x</div>
+            </div>
         </div>
     </div>
+</div>
+
+<div style="display: flex; gap: 10px; margin-top: 30px;">
+    <a href="{% url 'dish_edit' dish.id %}" class="btn btn-warning">✏️ Tahrirlash</a>
+    <a href="{% url 'dish_delete' dish.id %}" class="btn btn-danger" onclick="return confirm('{{ dish.name }} ni o\'chirmoqchimisiz?')">🗑️ O'chirish</a>
+    <a href="{% url 'menu' %}" class="btn" style="background: var(--light); color: var(--dark);">← Orqaga</a>
 </div>
 {% endblock %}

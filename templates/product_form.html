@@ -1,51 +1,29 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Restaurant Pro{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
 {% block content %}
-<div class="container">
-    <div class="form-header">
-        <h1>{{ title }}</h1>
-        <a href="/stock/" class="btn">← Назад к складу</a>
-    </div>
-    
-    <div class="form-container">
-        <form method="post" class="product-form">
-            {% csrf_token %}
-            
-            <div class="form-group">
-                <label for="{{ form.name.id_for_label }}">Название продукта:</label>
-                {{ form.name }}
-                {% if form.name.errors %}
-                <div class="error">{{ form.name.errors }}</div>
-                {% endif %}
+<div style="max-width: 600px; background: white; padding: 30px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for field in form %}
+        <div class="form-group">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div style="color: var(--danger); font-size: 0.9rem; margin-top: 5px;">
+                {{ field.errors }}
             </div>
-            
-            <div class="form-group">
-                <label for="{{ form.unit.id_for_label }}">Единица измерения:</label>
-                {{ form.unit }}
-                {% if form.unit.errors %}
-                <div class="error">{{ form.unit.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.quantity.id_for_label }}">Количество:</label>
-                    {{ form.quantity }}
-                    {% if form.quantity.errors %}
-                    <div class="error">{{ form.quantity.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="{{ form.purchase_price.id_for_label }}">Цена закупки:</label>
-                    {{ form.purchase_price }}
-                    {% if form.purchase_price.errors %}
-                    <div class="error">{{ form.purchase_price.errors }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <button type="submit" class="btn primary">💾 Сохранить продукт</button>
-        </form>
-    </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+            <a href="{% url 'stock' %}" class="btn" style="background: var(--light); color: var(--dark);">Bekor qilish</a>
+        </div>
+    </form>
 </div>
 {% endblock %}

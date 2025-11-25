@@ -1,61 +1,45 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Главная - Кафе Уютное{% endblock %}
+{% block title %}Asosiy Panel - Restaurant Pro{% endblock %}
+{% block page_title %}Asosiy Panel{% endblock %}
 
 {% block content %}
-<div class="container">
-    <section class="hero">
-        <h2>Добро пожаловать в систему управления кафе!</h2>
-        <p>Управляйте меню, заказами и складом в одном месте</p>
-    </section>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Jami Taomlar</div>
+        <div class="stat-value">{{ dishes_count }}</div>
+        <div>🍽️ Menyuda</div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-label">Mahsulotlar</div>
+        <div class="stat-value">{{ products_count }}</div>
+        <div>📦 Ombor</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-label">Stolilar</div>
+        <div class="stat-value">{{ tables_count }}</div>
+        <div>🪑 Jami</div>
+    </div>
+    <div class="stat-card danger">
+        <div class="stat-label">Faol Buyurtmalar</div>
+        <div class="stat-value">{{ active_orders_count }}</div>
+        <div>📋 Jarayonda</div>
+    </div>
+</div>
 
-    <section class="dashboard">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>🍽️ Блюда в меню</h3>
-                <p class="stat-number">{{ dishes_count }}</p>
-                <a href="/menu/" class="btn">Управление меню</a>
-            </div>
-
-            {% if request.user.is_storekeeper or request.user.is_administrator or request.user.is_manager %}
-            <div class="stat-card">
-                <h3>📦 Продукты на складе</h3>
-                <p class="stat-number">{{ products_count }}</p>
-                <a href="/stock/" class="btn">Управление складом</a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_waiter or request.user.is_administrator or request.user.is_manager %}
-            <div class="stat-card">
-                <h3>🪑 Столы</h3>
-                <p class="stat-number">{{ tables_count }}</p>
-                <a href="/tables/" class="btn">Просмотр столов</a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_waiter or request.user.is_cook or request.user.is_chef or request.user.is_administrator or request.user.is_manager %}
-            <div class="stat-card">
-                <h3>📋 Активные заказы</h3>
-                <p class="stat-number">{{ active_orders_count }}</p>
-                <a href="/orders/" class="btn">Управление заказами</a>
-            </div>
-            {% endif %}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
+    <div style="background: white; padding: 25px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+        <h3 style="margin-bottom: 20px;">⏰ So'nggi Harakatlar</h3>
+        <div style="color: #666; text-align: center; padding: 40px 0;">
+            Tez orada yangilanishlar...
         </div>
-    </section>
-
-    <section class="quick-actions">
-        <h3>Быстрые действия</h3>
-        <div class="action-buttons">
-            {% if request.user.is_administrator or request.user.is_manager or request.user.is_cook or request.user.is_chef %}
-            <a href="/menu/add/" class="btn primary">➕ Добавить блюдо</a>
-            {% endif %}
-            {% if request.user.is_storekeeper or request.user.is_administrator or request.user.is_manager %}
-            <a href="/stock/add/" class="btn primary">📥 Принять товар</a>
-            {% endif %}
-            {% if request.user.is_waiter or request.user.is_administrator or request.user.is_manager %}
-            <a href="/orders/create/" class="btn primary">📝 Создать заказ</a>
-            {% endif %}
+    </div>
+    
+    <div style="background: white; padding: 25px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+        <h3 style="margin-bottom: 20px;">📈 Bugun Statistika</h3>
+        <div style="color: #666; text-align: center; padding: 40px 0;">
+            Statistika ma'lumotlari...
         </div>
-    </section>
+    </div>
 </div>
 {% endblock %}

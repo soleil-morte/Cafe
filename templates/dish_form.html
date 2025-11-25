@@ -1,93 +1,86 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}{{ title }} - Кафе Уютное{% endblock %}
+{% block title %}{{ title }} - Restaurant Pro{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="form-header">
-        <h1>{{ title }}</h1>
-        <a href="/menu/" class="btn">← Назад к меню</a>
-    </div>
-
-    <div class="form-container">
-        <form method="post" class="dish-form" id="dish-form" enctype="multipart/form-data">
-            {% csrf_token %}
-
-            <div class="form-section">
-                <h3>📝 Основная информация</h3>
-
-                <div class="form-group">
-                    <label for="{{ dish_form.name.id_for_label }}">Название блюда:</label>
-                    {{ dish_form.name }}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ dish_form.description.id_for_label }}">Описание:</label>
-                    {{ dish_form.description }}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ dish_form.price.id_for_label }}">Цена продажи (сум):</label>
-                    {{ dish_form.price }}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ dish_form.image.id_for_label }}">Фото блюда:</label>
-                    {{ dish_form.image }}
-                    {% if dish_form.instance.image %}
-                    <div class="current-image">
-                        <p>Текущее фото:</p>
-                        <img src="{{ dish_form.instance.image.url }}" alt="{{ dish_form.instance.name }}">
+<div style="max-width: 800px; background: white; padding: 30px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <h3 style="margin-bottom: 20px;">Taom ma'lumotlari</h3>
+        
+        {% for field in dish_form %}
+        <div class="form-group">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div style="color: var(--danger); font-size: 0.9rem; margin-top: 5px;">
+                {{ field.errors }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <h3 style="margin: 30px 0 20px 0;">Masalliqlar</h3>
+        
+        {{ formset.management_form }}
+        <div id="ingredients-formset">
+            {% for form in formset %}
+            <div class="ingredient-form" style="border: 1px solid #eee; padding: 15px; margin-bottom: 15px; border-radius: var(--border-radius);">
+                {% for hidden in form.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
+                
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                    {% for field in form.visible_fields %}
+                    <div class="form-group">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+                    
+                    {% if form.instance.pk and formset.can_delete %}
+                    <div class="form-group">
+                        <label class="form-label">O'chirish</label>
+                        {{ form.DELETE }}
                     </div>
                     {% endif %}
                 </div>
             </div>
-
-            <div class="form-section">
-                <div class="section-header">
-                    <h3>🥘 Ингредиенты</h3>
-                    <button type="button" class="btn btn-sm" id="add-ingredient">➕ Добавить ингредиент</button>
-                </div>
-                <p class="form-help">Укажите продукты и их количество для одной порции</p>
-
-                {{ formset.management_form }}
-                <div class="ingredients-formset" id="ingredients-formset">
-                    {% for form in formset %}
-                    <div class="ingredient-form" data-product-unit="{{ form.instance.product.unit|default:'' }}">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Продукт:</label>
-                                {{ form.product }}
-                                <small class="product-info" style="color: #666; display: block; margin-top: 5px;">
-                                    {% if form.instance.product %}
-                                    На складе: {{ form.instance.product.quantity }} {{ form.instance.product.get_unit_display }}
-                                    {% endif %}
-                                </small>
-                            </div>
-                            <div class="form-group">
-                                <label>Количество:</label>
-                                {{ form.quantity }}
-                            </div>
-                            <div class="form-group">
-                                <label>Единица:</label>
-                                {{ form.unit }}
-                                <small class="conversion-info" style="color: #2196F3; display: block; margin-top: 5px;">
-                                    <!-- Здесь будет показываться конвертация -->
-                                </small>
-                            </div>
-                            <div class="form-group delete-group">
-                                <label>Удалить:</label>
-                                {{ form.DELETE }}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <button type="submit" class="btn primary">💾 Сохранить блюдо</button>
-        </form>
-    </div>
+            {% endfor %}
+        </div>
+        
+        <button type="button" id="add-ingredient" class="btn" style="background: var(--light); color: var(--dark); margin-bottom: 20px;">
+            + Yangi masalliq qo'shish
+        </button>
+        
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+            <a href="{% url 'menu' %}" class="btn" style="background: var(--light); color: var(--dark);">Bekor qilish</a>
+        </div>
+    </form>
 </div>
 
+<script>
+document.getElementById('add-ingredient').addEventListener('click', function() {
+    const formset = document.getElementById('ingredients-formset');
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    const formCount = parseInt(totalForms.value);
+    
+    const newForm = document.querySelector('.ingredient-form').cloneNode(true);
+    newForm.innerHTML = newForm.innerHTML.replace(/form-0/g, `form-${formCount}`);
+    newForm.innerHTML = newForm.innerHTML.replace(/form-0/g, `form-${formCount}`);
+    
+    // Clear input values
+    newForm.querySelectorAll('input').forEach(input => {
+        if (input.type !== 'hidden') {
+            input.value = '';
+        }
+    });
+    
+    formset.appendChild(newForm);
+    totalForms.value = formCount + 1;
+});
+</script>
 {% endblock %}
